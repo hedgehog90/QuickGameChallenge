@@ -1,19 +1,27 @@
 package;
 
-import lime.app.Future;
 import motion.Actuate;
 import motion.easing.Elastic;
-import openfl.Vector;
-import openfl.display.MovieClip;
-import openfl.display.Sprite;
+import motion.easing.Expo;
+import motion.easing.Linear;
+import motion.easing.Quad;
+import openfl.Assets;
 import openfl.Lib;
+import openfl.display.MovieClip;
+import openfl.display.Preloader;
+import openfl.display.Sprite;
+import openfl.display.StageScaleMode;
+import openfl.errors.Error;
 import openfl.events.Event;
-import openfl.filters.BlurFilter;
 import openfl.text.TextField;
+import openfl.text.TextFieldAutoSize;
 import openfl.text.TextFormat;
 import openfl.text.TextFormatAlign;
 import openfl.utils.AssetLibrary;
-import thx.promise.Promise;
+import promhx.Deferred;
+import promhx.Promise;
+import states.Game;
+import states.MainMenu;
 
 /**
  * ...
@@ -21,64 +29,86 @@ import thx.promise.Promise;
  */
 class Main extends Sprite 
 {
-	var _library:AssetLibrary;
-	var frostHead:MovieClip;
+	static public var self:Main;
+	
+	public var mainMenu:MainMenu;
+	public var fadeContainer:GameObject;
+	public var menuContainer:GameObject;
+	public var debugContainer:GameObject;
+	public var game:states.GameObject;
+	
+	public var gameObjects:Array<GameObject> = [];
 
 	public function new() 
 	{
+		self = this;
+		
 		super();
-		addEventListener(Event.ADDED_TO_STAGE, init);
-	}
-	
-	private function init(event:Event)
-	{
-		removeEventListener(Event.ADDED_TO_STAGE, init);
 		
-		var promises:Array<Promise<thx.Nil>> = [
-			Promise.create(function(resolve:thx.Nil->Void, reject:thx.Error->Void) {
-				var loader = AssetLibrary.loadFromFile("assets/assets.bundle");
-				loader.onComplete(function(library:AssetLibrary) {
-					_library = library;
-					resolve(thx.Nil.nil);
-				});
-				loader.onError(function(e:Dynamic){
-					reject(thx.Error.fromDynamic(e));
-				});
-			})
-		];
+		Actuate.defaultEase = Linear.easeNone;
 		
-		Promise.afterAll(promises).then(function(result:thx.Result<thx.Nil, thx.Error>){
+		add(menuContainer = new GameObject());
+		add(fadeContainer = new GameObject());
+		add(debugContainer = new GameObject());
+		
+		addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		
+		Promise.whenAll([loadLibrary()]).then(function(_){
 			start();
 		});
+		
+		trace(Assets.list());
+		trace(Assets.getSound("assets/sounds/buttonclick.wav"));
+	}
+	
+	private function loadLibrary():Promise<Bool>
+	{
+		var dp = new Deferred<Bool>();
+		var loader = Assets.loadLibrary("assets");
+		loader.onComplete(function(_) {
+			dp.resolve(true);
+		});
+		loader.onError(function(e){
+			dp.throwError(e);
+		});
+		return dp.promise();
 	}
 	
 	function start() 
 	{
-		addEventListener(Event.ENTER_FRAME, onEnterFrame);
-		frostHead = _library.getMovieClip("frost");
-		addChild(frostHead);
-		frostHead.x = stage.stageWidth / 2;
-		frostHead.y = stage.stageHeight / 2;
-		
-		var tf = new TextField();
-		tf.y = frostHead.y + frostHead.height / 2 + 30;
-		tf.selectable = false;
-		var format = new TextFormat();
-		format.size = 30;
-		format.font = "Arial";
-		format.align = TextFormatAlign.CENTER;
-		tf.defaultTextFormat = format;
-		tf.text = "LOADING";
-		tf.width = stage.stageWidth;
-	    addChild(tf);
-		
-		Actuate.tween(frostHead, 1, { rotation: 360 }).repeat();
-		Actuate.tween(frostHead, 1, { scaleX: 1, scaleY: 1 } ).ease(Elastic.easeOut).repeat().reflect();
-		//Actuate.effects(frostHead, 1).filter(BlurFilter, { blurX: 1, blurY: 1 }).repeat().reflect();
+		trace("start");
+		mainMenu = new states.MainMenu();
 	}
 	
 	private function onEnterFrame(e:Event):Void 
 	{
+		for (go in gameObjects) {
+			go.update();
+		}
+		
+		fadeContainer.scaleX = App.stageScaleX;
+		fadeContainer.scaleY = App.stageScaleY;
+		
+		if (mainMenu != null) {
+			mainMenu.update();
+		}
+	}
+	
+	public function fadeTo(funct1:Void->Void, funct2:Void->Void = null) 
+	{
+		var fade = new GameObject();
+		fade.graphics.beginFill(0xffffff, 1);
+		fade.graphics.drawRect(0, 0, App.SCREEN_WIDTH, App.SCREEN_HEIGHT);
+		fadeContainer.add(fade);
+		fade.alpha = 0;
+		
+		Actuate.tween(fade, 0.5, {alpha:1}).ease(Quad.easeInOut).onComplete(function(){
+			funct1();
+			Actuate.tween(fade, 0.5, {alpha:0}).ease(Quad.easeInOut).onComplete(function(){
+				fade.parent.removeChild(fade);
+				if (funct2 != null) funct2();
+			});
+		});
 	}
 
 }
