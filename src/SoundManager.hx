@@ -75,12 +75,12 @@ class SoundManager
 		return str.id;
 	}
 	
-	public static function playSound(path:String, vol:Float = 1.0) {
+	public static function playSound(path:String, vol:Float = 1.0, pan:Float = 0.0) {
 		if (!pool.exists(path)) {
 			pool[path] = Assets.getSound(path);
 		}
 		var soundChannel = pool[path].play();
-		soundChannel.soundTransform = new SoundTransform(vol);
+		soundChannel.soundTransform = new SoundTransform(vol, pan);
 	}
 	
 	public static function stop(id:Int, fadeTime:Float = 0.0) {

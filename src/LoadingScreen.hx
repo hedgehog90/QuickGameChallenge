@@ -21,6 +21,7 @@ class LoadingScreen extends Sprite
 	public function new() 
 	{
 		super();
+		#if !cpp
 		Assets.loadLibrary("loader").onComplete(function(_) {
 			screen = Assets.getMovieClip("loader:loading_screen");
 			loader = cast(screen.getChildByName("loader"), Sprite);
@@ -33,6 +34,7 @@ class LoadingScreen extends Sprite
 			Actuate.tween(frostHead, 1, { scaleX: 1.5, scaleY: 1.5 } ).ease(Elastic.easeOut).repeat().reflect();
 			Actuate.tween(text, 1, { scaleX: 1.2, scaleY: 1.2 } ).ease(Elastic.easeInOut).repeat().reflect();
 		});
+		#end
 	}
 	
 	public function update() 

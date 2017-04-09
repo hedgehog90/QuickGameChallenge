@@ -1,5 +1,8 @@
 package;
+import openfl.display.DisplayObject;
+import openfl.display.DisplayObjectContainer;
 import openfl.geom.Matrix;
+import openfl.geom.Point;
 import openfl.geom.Transform;
 
 /**
@@ -7,48 +10,79 @@ import openfl.geom.Transform;
  * @author Tom Wilson
  */
 
-class Utils {}
-
-class TransformUtils 
-{
-	static public function getGlobalMatrix(transform:Transform) {
-		return transform.concatenatedMatrix;
-	}
-}
-
-class MatrixUtils 
-{
-	static public function difference(m1:Matrix, m2:Matrix) {
-		return multiply(m2, inverse(m1));
-	}
-		
-	static public function multiply (m2:Matrix, m1:Matrix):Matrix {
-		var a = m1.a * m2.a + m1.b * m2.c;
-		var b = m1.a * m2.b + m1.b * m2.d;
-		var c = m1.c * m2.a + m1.d * m2.c;
-		var d = m1.c * m2.b + m1.d * m2.d;
-		var tx = m1.tx * m2.a + m1.ty * m2.c + m2.tx;
-		var ty = m1.tx * m2.b + m1.ty * m2.d + m2.ty;
-		return new Matrix(a,b,c,d,tx,ty);
-	}
-
-	static public function inverse(m:Matrix):Matrix {
-		var norm = m.a * m.d - m.b * m.c;
-		var output = new Matrix();
-		if (norm == 0) {
-			output.a = output.b = output.c = output.d = 0;
-			output.tx = -m.tx;
-			output.ty = -m.ty;
-		} else {
-			norm = 1.0 / norm;
-			output.a = m.d * norm;
-			output.d = m.a * norm;
-			output.b = m.b * -norm;
-			output.c = m.c * -norm;
-			output.tx = -output.a * m.tx - output.c * m.ty;
-			output.ty = -output.b * m.tx - output.d * m.ty;
+class Utils { }
+	
+class DisplayObjectContainerUtils {
+	
+	static public function getChildren(displayObjectContainer:DisplayObjectContainer):Array<DisplayObject> {
+		var arr:Array<DisplayObject> = [];
+		for (i in 0...displayObjectContainer.numChildren) {
+			arr.push(displayObjectContainer.getChildAt(i));
 		}
-		return output;
+		return arr;
+	}
+	
+}
+	
+class DisplayObjectUtils {
+	
+	static public function removeFromParent(displayObject:DisplayObject):Void {
+		if (displayObject.parent != null) {
+			displayObject.parent.removeChild(displayObject);
+		}
+	}
+	
+	static public function localToLocal(from:DisplayObject, to:DisplayObject):Point
+	{
+		var point:Point = new Point();
+		point = from.localToGlobal(point);
+		point = to.globalToLocal(point);
+		return point;
+	}
+	
+}
+	
+class ArrayUtils {
+	
+	static public function contains<T>(array:Array<T>, element:T):Bool {
+		return array.indexOf(element) > -1;
+	}
+	
+}
+	
+class TransformUtils {
+	
+	static public function getGlobalMatrix(t:Transform):Matrix {
+		return t.concatenatedMatrix;
+	}
+	
+	static public function setGlobalMatrix(t:Transform, gm1:Matrix):Void {
+		t.matrix = new Matrix();
+		var gm2 = getGlobalMatrix(t);
+		var dif = MatrixUtils.difference(gm2, gm1);
+		t.matrix = dif;
+	}
+	
+	static public function differenceMatrix(t1:Transform, t2:Transform):Matrix {
+		return MatrixUtils.difference(getGlobalMatrix(t1), getGlobalMatrix(t2));
+	}
+	
+}
+	
+class MatrixUtils {
+	
+	static public function difference(m2:Matrix, m1:Matrix):Matrix {
+		m1 = m1.clone();
+		m2 = m2.clone();
+		m2.invert();
+		m1.concat(m2);
+		return m1;
+	}
+	
+	static public function applyMatrix(t:Transform, m:Matrix):Void {
+		m = m.clone();
+		m.concat(t.matrix);
+		t.matrix = m;
 	}
 	
 }

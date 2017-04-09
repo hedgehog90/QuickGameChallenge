@@ -1,8 +1,10 @@
 package;
+import haxe.Timer;
 import openfl.Lib;
 import openfl.display.Stage;
 import openfl.display.StageScaleMode;
 import openfl.events.Event;
+import openfl._internal.timeline.Frame;
 
 /**
  * ...
@@ -10,20 +12,23 @@ import openfl.events.Event;
  */
 class App 
 {
+	static public var debug:Bool = false;
 
-	static public var SCREEN_WIDTH = 1024;
-	static public var SCREEN_HEIGHT = 633;
-	static public var stage:Stage;
-	static public var stageScaleY:Float = 1;
-	static public var stageScaleX:Float = 1;
+	static public var SCREEN_WIDTH(default,null) = 1024;
+	static public var SCREEN_HEIGHT(default,null) = 633;
+	static public var stage(default,null):Stage;
+	static public var stageScaleY(default,null):Float = 1;
+	static public var stageScaleX(default,null):Float = 1;
 	static public var stageScale:Float;
-	static public var debug:Bool = true;
+	static public var deltaTime(default,null):Float;
+	static private var lastTime:Float;
 	
 	static public function init() 
 	{
 		stage = Lib.current.stage;
 		Lib.current.stage.scaleMode = StageScaleMode.SHOW_ALL;
 		Lib.current.stage.addEventListener(Event.RESIZE, onResize);
+		Lib.current.stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 	}
 	
 	static private function onResize(e:Event):Void 
@@ -39,11 +44,18 @@ class App
 		Lib.current.scaleY = stageScale;
 		
 		if (stageScaleX > stageScaleY) {
-			Lib.current.x = (Lib.current.stage.stageWidth - NOMINAL_WIDTH * stageScale) / 2;
+			Lib.current.x = (Lib.current.stage.stageWidth - App.SCREEN_WIDTH * stageScale) / 2;
 		} else {
-			Lib.current.y = (Lib.current.stage.stageHeight - NOMINAL_HEIGHT * stageScale) / 2;
+			Lib.current.y = (Lib.current.stage.stageHeight - App.SCREEN_HEIGHT * stageScale) / 2;
 		}
 		#end
+	}
+	
+	static private function onEnterFrame(e:Event):Void 
+	{
+		var time = Timer.stamp();
+		deltaTime = time - lastTime;
+		lastTime = time;
 	}
 	
 }

@@ -1,4 +1,4 @@
-package;
+package components;
 using Thx.Floats;
 
 import haxe.Timer;
@@ -11,12 +11,13 @@ import openfl.display.DisplayObject;
 import openfl.display.MovieClip;
 import openfl.display.Sprite;
 import openfl.text.TextField;
+import components.World;
 
 /**
  * ...
  * @author Tom Wilson
  */
-class FlappyFrost extends GameObject
+class FlappyFrost extends Component
 {
 	var display:MovieClip;
 	var head:Sprite;
@@ -58,17 +59,13 @@ class FlappyFrost extends GameObject
 	var debugText:openfl.text.TextField;
 	var flapTimer:Float = 0;
 	var rotationTarget:Float;
-	var headJitter:JitterMotion;
-	var lastTime:Float = 0;
-	var world:World;
 
-	public function new(world:World) 
+	override function register() 
 	{
-		super();
-		this.world = world;
+		super.register();
 		
 		display = Assets.getMovieClip("assets:frost");
-		addChild(display);
+		gameObject.addChild(display);
 		
 		bottom = cast(display.getChildByName("bottom"), Sprite);
 		top = cast(display.getChildByName("top"), Sprite);
@@ -113,70 +110,57 @@ class FlappyFrost extends GameObject
 		animate(headInner, "x", 0.5, 1, -1, 1);
 		animate(headInner, "y", 0.5, 1, -1, 1);*/
 		
-		headJitter = new JitterMotion(headInner);
-		
 		animate(hair, "scaleX", 0.2, 0.4, 0.95, 1.05);
 		animate(hair, "scaleY", 0.2, 0.4, 0.95, 1.05);
 		
 		animate(display, "rotation", 0.5, 1, -3, 6);
 		animate(display, "x", 0.5, 1, -5, 5);
 		animate(display, "y", 0.5, 1, -5, 5);
-		
-		world.addChild(this);
 	}
 	
 	function animate(part:DisplayObject, property:String, timeMin:Float, timeMax:Float, valueMin:Float, valueMax:Float, ease = null){
 		function repeat() {
 			if (ease == null) ease = Quad.easeInOut;
 			var props:Dynamic = {};
-			untyped {props[property] = Random.float(valueMin, valueMax) * animateAmount; }
+			Reflect.setField(props, property, Random.float(valueMin, valueMax) * animateAmount);
 			Actuate.stop(part);
 			Actuate.tween(part, Random.float(timeMin, timeMax) * animateSpeed, props).ease(ease).onComplete(repeat);
 		}
 		repeat();
 	}
 	
-	public function toggleAutoFly(height:Float){
+	public function toggleAutoFly(){
 		autoFly = true;
-		autoFlyHeight = height;
+		autoFlyHeight = gameObject.y;
 		if (App.debug) {
-			Main.self.debugContainer.graphics.lineStyle(1, 0x00ff00);
-			Main.self.debugContainer.graphics.moveTo(0, height);
-			Main.self.debugContainer.graphics.lineTo(App.SCREEN_WIDTH, height);
+			Main.self.world.debugContainer.graphics.lineStyle(1, 0x00ff00);
+			Main.self.world.debugContainer.graphics.moveTo(0, autoFlyHeight);
+			Main.self.world.debugContainer.graphics.lineTo(App.SCREEN_WIDTH, autoFlyHeight);
 		}
 	}
 	
-	public function update() 
+	override public function update() 
 	{
-		var currTime = Timer.stamp();
+		super.update();
 		
-		headJitter.update(lastTime - currTime);
-		
-		x += speedX;
-		y -= speedY;
-		rotation += (rotationTarget - rotation) / 8;
+		gameObject.x += speedX;
+		gameObject.y -= speedY;
+		gameObject.rotation += (rotationTarget - gameObject.rotation) / 8;
 		
 		rotationTarget = speedY.clamp( -20, 20) / 20 * -20;
 		speedY = (speedY - gravity).clamp(-8, 50);
 		speedX = (speedX - drag).clamp(3, 50);
 		
 		if (autoFly) {
-			if (y > autoFlyHeight && flapTimer <= 0 && speedY < 0) {
+			if (gameObject.y > autoFlyHeight && flapTimer <= 0 && speedY < 0) {
 				flap();
 			}
 		}
 		if (App.debug) {
-			Main.self.debugContainer.graphics.lineStyle(1, 0xff0000);
-			Main.self.debugContainer.graphics.lineTo(x, y);
+			Main.self.world.debugContainer.graphics.lineStyle(1, 0xff0000);
+			Main.self.world.debugContainer.graphics.lineTo(gameObject.x, gameObject.y);
 		}
 		flapTimer -= 0.2;
-		
-		lastTime = currTime;
-	}
-	
-	public function destroy() 
-	{
-		parent.removeChild(this);
 	}
 	
 	public function flap() 
@@ -184,7 +168,7 @@ class FlappyFrost extends GameObject
 		speedX += 2;
 		speedY = 8;
 		if (App.debug) {
-			Main.self.debugContainer.graphics.drawCircle(x, y, 5);
+			Main.self.debugContainer.graphics.drawCircle(gameObject.x, gameObject.y, 5);
 		}
 		flapTimer = 1;
 		flapState = FlapState.DOWN;
@@ -192,7 +176,8 @@ class FlappyFrost extends GameObject
 		var downTime = Math.min(0.2, time-lastFlapTime);
 		var upTime = Math.min(0.2, time-lastFlapTime);
 		
-		//SoundManager.playSound("assets/sounds/wing.wav");
+		SoundManager.playSound("assets/sounds/wing.wav");
+		
 		for (arm in arms) {
 			var mirror = (arm == arms[0]) ? 1 : -1;
 			Actuate.stop(arm);

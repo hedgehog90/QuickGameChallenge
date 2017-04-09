@@ -1,5 +1,6 @@
 package;
 
+using Utils;
 import motion.Actuate;
 import motion.easing.Elastic;
 import motion.easing.Expo;
@@ -20,24 +21,25 @@ import openfl.text.TextFormatAlign;
 import openfl.utils.AssetLibrary;
 import promhx.Deferred;
 import promhx.Promise;
-import states.Game;
-import states.MainMenu;
+import components.MainMenu;
+import components.World;
 
 /**
  * ...
  * @author Tom Wilson
  */
-class Main extends Sprite 
+class Main extends GameObject 
 {
 	static public var self:Main;
 	
-	public var mainMenu:MainMenu;
 	public var fadeContainer:GameObject;
+	public var gameContainer:GameObject;
 	public var menuContainer:GameObject;
 	public var debugContainer:GameObject;
-	public var game:states.GameObject;
-	
+		
 	public var gameObjects:Array<GameObject> = [];
+	
+	public var world:components.World;
 
 	public function new() 
 	{
@@ -47,9 +49,10 @@ class Main extends Sprite
 		
 		Actuate.defaultEase = Linear.easeNone;
 		
-		add(menuContainer = new GameObject());
-		add(fadeContainer = new GameObject());
-		add(debugContainer = new GameObject());
+		addChild(gameContainer = new GameObject());
+		addChild(menuContainer = new GameObject());
+		addChild(fadeContainer = new GameObject());
+		addChild(debugContainer = new GameObject());
 		
 		addEventListener(Event.ENTER_FRAME, onEnterFrame);
 		
@@ -76,22 +79,18 @@ class Main extends Sprite
 	
 	function start() 
 	{
-		trace("start");
-		mainMenu = new states.MainMenu();
+		gameContainer.addChild(GameObject.create([new components.World()]));
+		menuContainer.addChild(GameObject.create([new MainMenu()]));
 	}
 	
 	private function onEnterFrame(e:Event):Void 
 	{
-		for (go in gameObjects) {
+		for (go in gameObjects.copy()) {
 			go.update();
 		}
 		
 		fadeContainer.scaleX = App.stageScaleX;
 		fadeContainer.scaleY = App.stageScaleY;
-		
-		if (mainMenu != null) {
-			mainMenu.update();
-		}
 	}
 	
 	public function fadeTo(funct1:Void->Void, funct2:Void->Void = null) 
@@ -99,13 +98,13 @@ class Main extends Sprite
 		var fade = new GameObject();
 		fade.graphics.beginFill(0xffffff, 1);
 		fade.graphics.drawRect(0, 0, App.SCREEN_WIDTH, App.SCREEN_HEIGHT);
-		fadeContainer.add(fade);
+		fadeContainer.addChild(fade);
 		fade.alpha = 0;
 		
 		Actuate.tween(fade, 0.5, {alpha:1}).ease(Quad.easeInOut).onComplete(function(){
 			funct1();
 			Actuate.tween(fade, 0.5, {alpha:0}).ease(Quad.easeInOut).onComplete(function(){
-				fade.parent.removeChild(fade);
+				fade.removeFromParent();
 				if (funct2 != null) funct2();
 			});
 		});
