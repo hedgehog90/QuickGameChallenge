@@ -4,6 +4,7 @@ import motion.Actuate;
 import motion.easing.Bounce;
 import motion.easing.Quad;
 import openfl.display.DisplayObject;
+import openfl.display.InteractiveObject;
 import openfl.display.Sprite;
 import openfl.events.Event;
 import openfl.events.MouseEvent;
@@ -12,8 +13,11 @@ import openfl.events.MouseEvent;
  * ...
  * @author Tom Wilson
  */
-class Button extends components.Component
+class Button extends Component
 {
+	public var gameObject(get, null):Sprite;
+	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
+	
 	public var onClick : Void->Void;
 	public var onRollOver : Void->Void;
 	public var onRollOut : Void->Void;
@@ -21,9 +25,9 @@ class Button extends components.Component
 	var isOver:Bool;
 	var isDown:Bool;
 
-	override public function register() 
+	override public function onEnable() 
 	{
-		super.register();
+		super.onEnable();
 		
 		enabled = true;
 		gameObject.addEventListener(MouseEvent.CLICK, _onClick);
@@ -33,16 +37,16 @@ class Button extends components.Component
 		gameObject.addEventListener(MouseEvent.ROLL_OUT, _onRollOut);
 	}
 	
-	override public function unregister() 
+	override public function onDisable() 
 	{
-		super.unregister();
+		super.onDisable();
 		
+		enabled = false;
 		gameObject.removeEventListener(MouseEvent.CLICK, _onClick);
 		gameObject.removeEventListener(MouseEvent.MOUSE_DOWN, _onMouseDown);
 		gameObject.removeEventListener(MouseEvent.MOUSE_UP, _onMouseUp);
-		gameObject.removeEventListener(MouseEvent.ROLL_OVER, _onRollOver);
-		gameObject.removeEventListener(MouseEvent.ROLL_OUT, _onRollOut);
-		gameObject = null;
+		gameObject.removeEventListener(MouseEvent.MOUSE_OVER, _onRollOver);
+		gameObject.removeEventListener(MouseEvent.MOUSE_OUT, _onRollOut);
 	}
 	
 	private function _onClick(e:MouseEvent):Void 

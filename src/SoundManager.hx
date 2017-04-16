@@ -80,7 +80,10 @@ class SoundManager
 			pool[path] = Assets.getSound(path);
 		}
 		var soundChannel = pool[path].play();
-		soundChannel.soundTransform = new SoundTransform(vol, pan);
+		if (soundChannel != null) {
+			//can sometimes be null... dunno why.
+			soundChannel.soundTransform = new SoundTransform(vol, pan);
+		}
 	}
 	
 	public static function stop(id:Int, fadeTime:Float = 0.0) {

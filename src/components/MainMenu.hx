@@ -1,4 +1,7 @@
 package components;
+
+using components.Component;
+
 import components.Button;
 import components.Component;
 import motion.Actuate;
@@ -20,34 +23,36 @@ import components.World;
  */
 class MainMenu extends Component
 {
-	var menu:GameObject;
-	var button:GameObject;
-	var copyright:GameObject;
-	var title:GameObject;
+	public var gameObject(get, null):Sprite;
+	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
+	
+	var menu:Sprite;
+	var button:Sprite;
+	var copyright:Sprite;
+	var title:Sprite;
 
 	public function new() 
 	{
 		super();
 	}
 	
-	override function register() 
+	override function onEnable() 
 	{
-		super.register();
+		super.onEnable();
 		
-		menu = GameObject.createWithDisplayObject(Assets.getMovieClip("assets:main_menu"), true);
+		var menu = Assets.getMovieClip("assets:main_menu");
 		gameObject.addChild(menu);
 		
-		button = menu.getChildGoByName("startButton");
-		copyright = menu.getChildGoByName("copyright");
-		title = menu.getChildGoByName("title");
+		button = cast(menu.getChildByName("startButton"), Sprite);
+		copyright = cast(menu.getChildByName("copyright"), Sprite);
+		title = cast(menu.getChildByName("title"), Sprite);
 		
-		var buttonComponent = new components.Button();
+		var buttonComponent = new Button();
 		buttonComponent.onClick = function(){
 			buttonComponent.enabled = false;
-			gameObject.mouseEnabled = false;
-			gameObject.mouseEnabled = false;
+			//gameObject.mouseEnabled = false;
 			Actuate.tween(gameObject, 1, {alpha : 0}).onComplete(function(){
-				destroy();
+				this.destroyWithGameObject();
 			});
 			Main.self.world.start();
 		};
@@ -60,9 +65,9 @@ class MainMenu extends Component
 		updateScreenPositions();
 	}
 	
-	override public function update() 
+	override public function onUpdate() 
 	{
-		super.update();
+		super.onUpdate();
 		
 		updateScreenPositions();
 	}

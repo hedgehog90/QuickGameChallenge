@@ -20,8 +20,10 @@ class App
 	static public var stageScaleY(default,null):Float = 1;
 	static public var stageScaleX(default,null):Float = 1;
 	static public var stageScale:Float;
-	static public var deltaTime(default,null):Float;
-	static private var lastTime:Float;
+	static public var deltaTime(default,null):Int;
+	static public var frameRate(default,null):Float;
+	static public var frameDeltaTime(default,null):Float;
+	static private var lastTime:Int;
 	
 	static public function init() 
 	{
@@ -29,6 +31,10 @@ class App
 		Lib.current.stage.scaleMode = StageScaleMode.SHOW_ALL;
 		Lib.current.stage.addEventListener(Event.RESIZE, onResize);
 		Lib.current.stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		Input.init();
+		
+		frameRate = Lib.current.stage.frameRate;
+		frameDeltaTime = 1 / frameRate;
 	}
 	
 	static private function onResize(e:Event):Void 
@@ -53,9 +59,9 @@ class App
 	
 	static private function onEnterFrame(e:Event):Void 
 	{
-		var time = Timer.stamp();
-		deltaTime = time - lastTime;
-		lastTime = time;
+        var time = Lib.getTimer();
+        deltaTime = time - lastTime;
+        lastTime = time;
 	}
 	
 }

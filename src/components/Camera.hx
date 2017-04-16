@@ -4,11 +4,12 @@ using Utils;
 
 import components.Component;
 import haxe.Timer;
-import lime.math.Rectangle;
 import openfl.display.DisplayObject;
 import openfl.display.DisplayObjectContainer;
 import openfl.display.Sprite;
 import openfl.geom.Matrix;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
 
 /**
  * ...
@@ -16,64 +17,67 @@ import openfl.geom.Matrix;
  */
 class Camera extends Component
 {
-	public var context:GameObject;
+	public var gameObject(get, null):Sprite;
+	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
+	
+	public var context:DisplayObject;
 	public var zoom:Float = 1.0;
+	public var rect:Rectangle = new Rectangle();
 
-	public function new(context:GameObject) 
+	public function new(context:DisplayObject) 
 	{
 		this.context = context;
 		
 		super();
 	}
 	
-	override function register() 
+	override function onEnable() 
 	{
-		super.register();
+		super.onEnable();
 		
 		updateMatrix();
 		
 		if (App.debug){
-			gameObject.graphics.lineStyle(5, 0xff0000);
-			gameObject.graphics.drawRect(-App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2, App.SCREEN_WIDTH, App.SCREEN_HEIGHT);
-			gameObject.graphics.lineStyle(1, 0xff0000);
-			gameObject.graphics.moveTo(-App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2);
-			gameObject.graphics.lineTo(App.SCREEN_WIDTH/2, App.SCREEN_HEIGHT/2);
-			gameObject.graphics.moveTo(-App.SCREEN_WIDTH/2, App.SCREEN_HEIGHT/2);
-			gameObject.graphics.lineTo(App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2);
+			var graphics = cast(gameObject, Sprite).graphics;
+			graphics.lineStyle(5, 0xff0000);
+			graphics.drawRect(-App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2, App.SCREEN_WIDTH, App.SCREEN_HEIGHT);
+			graphics.lineStyle(1, 0xff0000);
+			graphics.moveTo(-App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2);
+			graphics.lineTo(App.SCREEN_WIDTH/2, App.SCREEN_HEIGHT/2);
+			graphics.moveTo(-App.SCREEN_WIDTH/2, App.SCREEN_HEIGHT/2);
+			graphics.lineTo(App.SCREEN_WIDTH/2, -App.SCREEN_HEIGHT/2);
 		}
 	}
 	
-	override public function update() 
+	override public function onUpdate() 
 	{
-		super.update();
+		super.onUpdate();
 	}
 	
-	override public function postUpdate() 
+	override public function onPostUpdate() 
 	{
-		super.postUpdate();
+		super.onPostUpdate();
 		
 		updateMatrix();
 	}
 	
 	function updateMatrix() 
 	{
-		//var worldMatrix = context.transform.getGlobalMatrix();
-		//context.transform.matrix = new Matrix();
 		var matrix = context.transform.differenceMatrix(gameObject.transform);
-		//var matrix = gameObject.transform.matrix;
-		//matrix.concat(gameObject.parent.transform.matrix);
-		//trace(gameObject.transform.matrix);
+		
+		var rectMatrix = matrix.clone();
+		var pos = rectMatrix.transformPoint(new Point());
+		rectMatrix.scale(1/zoom,1/zoom);
+		var dim = rectMatrix.deltaTransformPoint(new Point(App.SCREEN_WIDTH, App.SCREEN_HEIGHT));
+		rect.x = pos.x-dim.x/2;
+		rect.y = pos.y-dim.y/2;
+		rect.width = dim.x;
+		rect.height = dim.y;
+		
 		matrix.invert();
 		matrix.scale(zoom,zoom);
-		matrix.tx += App.SCREEN_WIDTH / 2;
-		matrix.ty += App.SCREEN_HEIGHT / 2;
+		matrix.translate(App.SCREEN_WIDTH / 2, App.SCREEN_HEIGHT / 2);
 		context.transform.matrix = matrix;
-		
-		//var diffMatrix = context.transform.differenceMatrix(gameObject.transform);
-		//diffMatrix.tx += App.SCREEN_WIDTH / 2;
-		//diffMatrix.ty += App.SCREEN_HEIGHT / 2;
-		//diffMatrix.invert();
-		//context.transform.matrix = diffMatrix;
 	}
 	
 }

@@ -1,10 +1,19 @@
 package components;
+
+using components.Component;
 using Thx.Floats;
 
 import haxe.Timer;
 import motion.Actuate;
+import motion.easing.Expo;
 import motion.easing.Quad;
 import motion.easing.Quart;
+import nape.callbacks.InteractionType;
+import nape.geom.Vec2;
+import nape.phys.Body;
+import nape.phys.BodyType;
+import nape.shape.Circle;
+import nape.shape.Polygon;
 import openfl.Assets;
 import openfl.Lib;
 import openfl.display.DisplayObject;
@@ -12,6 +21,7 @@ import openfl.display.MovieClip;
 import openfl.display.Sprite;
 import openfl.text.TextField;
 import components.World;
+import openfl.ui.Keyboard;
 
 /**
  * ...
@@ -19,7 +29,14 @@ import components.World;
  */
 class FlappyFrost extends Component
 {
-	var display:MovieClip;
+	public var gameObject(get, null):Sprite;
+	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
+	
+	public var autoFly:Bool = false;
+	public var autoFlyHeight:Float = App.SCREEN_HEIGHT/2;
+	public var body:Body;
+	
+	var frost:MovieClip;
 	var head:Sprite;
 	var arm1:Sprite;
 	var arm2:Sprite;
@@ -29,8 +46,6 @@ class FlappyFrost extends Component
 	var torso:Sprite;
 	var top:Sprite;
 	var abdomen:Sprite;
-	var animateAmount:Float = 1.0;
-	var animateSpeed:Float = 1.0;
 	var mouth:Sprite;
 	var hair:Sprite;
 	var eye1:Sprite;
@@ -40,35 +55,36 @@ class FlappyFrost extends Component
 	var leg2Inner:Sprite;
 	var arm1Inner:Sprite;
 	var arm2Inner:Sprite;
-	var legsInner:Array<Sprite>;
-	var armsInner:Array<Sprite>;
-	var legs:Array<Sprite>;
-	var arms:Array<Sprite>;
-	var eyes:Array<Sprite>;
-	var speedX:Float = 1.5;
-	var speedY:Float = 0;
-	var flapSpeedX:Float = 0;
-	var flapSpeedY:Float = 0;
-	var flapSpeedInfluence:Float  = 1;
-	var gravity:Float = 0.5;
-	var drag:Float = 0.1;
-	var autoFly:Bool = false;
-	var autoFlyHeight:Float = App.SCREEN_HEIGHT/2;
+	
+	var legsInner:Array<Sprite> = [];
+	var armsInner:Array<Sprite> = [];
+	var legs:Array<Sprite> = [];
+	var arms:Array<Sprite> = [];
+	var eyes:Array<Sprite> = [];
+	
+	var legJitters:Array<JitterMotion> = [];
+	var armJitters:Array<JitterMotion> = [];
+	var headJitter:JitterMotion;
+	var bodyJitter:JitterMotion;
+	var hairJitter:JitterMotion;
+	
 	var lastFlapTime:Float = 0;
 	var flapState:FlapState = FlapState.NEUTRAL;
-	var debugText:openfl.text.TextField;
 	var flapTimer:Float = 0;
-	var rotationTarget:Float;
+	var rotationTarget:Float = 0;
+	var world:World;
 
-	override function register() 
+	override function onEnable() 
 	{
-		super.register();
+		super.onEnable();
 		
-		display = Assets.getMovieClip("assets:frost");
-		gameObject.addChild(display);
+		world = gameObject.getParentComponent(World);
 		
-		bottom = cast(display.getChildByName("bottom"), Sprite);
-		top = cast(display.getChildByName("top"), Sprite);
+		frost = Assets.getMovieClip("assets:frost");
+		gameObject.addChild(frost);
+		
+		bottom = cast(frost.getChildByName("bottom"), Sprite);
+		top = cast(frost.getChildByName("top"), Sprite);
 		head = cast(top.getChildByName("head"), Sprite);
 		arm1 = cast(top.getChildByName("arm1"), Sprite);
 		arm2 = cast(top.getChildByName("arm2"), Sprite);
@@ -94,31 +110,40 @@ class FlappyFrost extends Component
 		armsInner = [arm1Inner, arm2Inner];
 		eyes = [eye1, eye2];
 		
-		for(leg in legsInner) {
-			animate(leg, "rotation", 0.3, 0.8, -18, 18);
-			animate(leg, "x", 0.5, 1, -1, 1);
-			animate(leg, "y", 0.5, 1, -1, 1);
+		for (leg in legsInner) {
+			var jitter = new JitterMotion();
+			leg.addComponent(jitter);
+			legJitters.push(jitter);
 		}
 		
-		for(arm in armsInner) {
-			animate(arm, "rotation", 0.5, 1, -3, 6);
-			animate(arm, "x", 0.5, 1, -1, 1);
-			animate(arm, "y", 0.5, 1, -1, 1);
+		for (arm in armsInner) {
+			var jitter = new JitterMotion();
+			arm.addComponent(jitter);
+			armJitters.push(jitter);
 		}
 		
-		/*animate(headInner, "rotation", 0.5, 1, -3, 6);
-		animate(headInner, "x", 0.5, 1, -1, 1);
-		animate(headInner, "y", 0.5, 1, -1, 1);*/
+		headJitter = new JitterMotion();
+		headInner.addComponent(headJitter);
 		
-		animate(hair, "scaleX", 0.2, 0.4, 0.95, 1.05);
-		animate(hair, "scaleY", 0.2, 0.4, 0.95, 1.05);
+		hairJitter = new JitterMotion();
+		hair.addComponent(hairJitter);
 		
-		animate(display, "rotation", 0.5, 1, -3, 6);
-		animate(display, "x", 0.5, 1, -5, 5);
-		animate(display, "y", 0.5, 1, -5, 5);
+		bodyJitter = new JitterMotion();
+		frost.addComponent(bodyJitter);
+		
+		body = new Body(BodyType.DYNAMIC);
+		body.shapes.add(new Circle(40));
+		body.space = Main.self.world.space;
 	}
 	
-	function animate(part:DisplayObject, property:String, timeMin:Float, timeMax:Float, valueMin:Float, valueMax:Float, ease = null){
+	override function onDisable() 
+	{
+		super.onDisable();
+		world = null;
+		body.space = null;
+	}
+	
+	/*function animate(part:DisplayObject, property:String, timeMin:Float, timeMax:Float, valueMin:Float, valueMax:Float, ease = null){
 		function repeat() {
 			if (ease == null) ease = Quad.easeInOut;
 			var props:Dynamic = {};
@@ -127,65 +152,103 @@ class FlappyFrost extends Component
 			Actuate.tween(part, Random.float(timeMin, timeMax) * animateSpeed, props).ease(ease).onComplete(repeat);
 		}
 		repeat();
-	}
+	}*/
 	
-	public function toggleAutoFly(){
-		autoFly = true;
-		autoFlyHeight = gameObject.y;
-		if (App.debug) {
-			Main.self.world.debugContainer.graphics.lineStyle(1, 0x00ff00);
-			Main.self.world.debugContainer.graphics.moveTo(0, autoFlyHeight);
-			Main.self.world.debugContainer.graphics.lineTo(App.SCREEN_WIDTH, autoFlyHeight);
-		}
-	}
-	
-	override public function update() 
+	override public function onUpdate() 
 	{
-		super.update();
+		super.onUpdate();
 		
-		gameObject.x += speedX;
-		gameObject.y -= speedY;
-		gameObject.rotation += (rotationTarget - gameObject.rotation) / 8;
-		
-		rotationTarget = speedY.clamp( -20, 20) / 20 * -20;
-		speedY = (speedY - gravity).clamp(-8, 50);
-		speedX = (speedX - drag).clamp(3, 50);
-		
+		//trace(body.position, autoFlyHeight);
 		if (autoFly) {
-			if (gameObject.y > autoFlyHeight && flapTimer <= 0 && speedY < 0) {
+			if (body.position.y > autoFlyHeight && flapTimer > 0.2) {
 				flap();
 			}
+		} else {
+			if (Input.isKeyPressed(Keyboard.SPACE) || Input.isKeyPressed(Keyboard.UP)){
+				flap();
+			}
+			if (Input.isKeyDown(Keyboard.LEFT)){
+				//speedX = 2
+				body.applyImpulse(new Vec2(-200,0));
+			}
+			if (Input.isKeyDown(Keyboard.RIGHT)){
+				//speedX = 2;
+				body.applyImpulse(new Vec2(200,0));
+			}
 		}
-		if (App.debug) {
-			Main.self.world.debugContainer.graphics.lineStyle(1, 0xff0000);
-			Main.self.world.debugContainer.graphics.lineTo(gameObject.x, gameObject.y);
-		}
-		flapTimer -= 0.2;
+		
+		body.velocity = new Vec2(body.velocity.x.clampSym(200), body.velocity.y);
+		var scaredness = Utils.MathUtils.calculatePercent(0.2, 2, flapTimer).clamp(0, 1);
+		for (jitter in legJitters) jitter.properties.set(5, 0.5, 1, 1, scaredness.interpolate(15,50), scaredness.interpolate(0.8,2.5), 1);
+		for (jitter in armJitters) jitter.properties.set(5, 0.5, 1, 1, scaredness.interpolate(5,50), scaredness.interpolate(0.5,2), 1);
+		headJitter.properties.set(2, 0.5, 1, 1, 5, 1, 1);
+		hairJitter.properties.set(0,0,0,0,0,0,0,0.1,0.1);
+		//bodyJitter.restrained = false;
+		
+		//body.velocity = new Vec2(body.velocity.x.clamp(0,50), body.velocity.y.clamp(0,));
+		//if (body.velocity.x > 50)
+		
+		//speedY = (speedY - gravity).clamp(-16, 30);
+		//speedX = (speedX * 0.95).clamp(3, 50);
+		
+		rotationTarget = body.velocity.y * 0.05;
+		flapTimer += App.frameDeltaTime;
+		
+		
+	}
+	
+	override function onPostUpdate() 
+	{
+		super.onPostUpdate();
+		gameObject.x = body.position.x;
+		gameObject.y = body.position.y;
+		//gameObject.x += speedX;
+		//gameObject.y -= speedY;
+		gameObject.rotation += (rotationTarget - gameObject.rotation) * 0.5;
+		
+		var bodies = body.interactingBodies(InteractionType.ANY);
+		bodies.foreach(function(b:Body){
+			var go:DisplayObject = cast(b.userData, DisplayObject);
+			var components = go.getComponents();
+			for (c in components) {
+				if (Std.is(c, Coin)) {
+					cast(c, Coin).hit();
+				}
+			}
+		});
 	}
 	
 	public function flap() 
 	{
-		speedX += 2;
-		speedY = 8;
-		if (App.debug) {
-			Main.self.debugContainer.graphics.drawCircle(gameObject.x, gameObject.y, 5);
+		body.applyImpulse(new Vec2(200, 0));
+		//body.velocity = new Vec2(body.velocity.x, -400);
+		if (autoFly) {
+			body.velocity.y = -250;
+		} else {
+			body.velocity.y = -400;
 		}
-		flapTimer = 1;
+		//speedX += 5;
+		//speedY = 8;
+		
+		flapTimer = 0;
 		flapState = FlapState.DOWN;
-		var time = Lib.getTimer()/1000.0;
-		var downTime = Math.min(0.2, time-lastFlapTime);
-		var upTime = Math.min(0.2, time-lastFlapTime);
+		var time = Lib.getTimer() / 1000.0;
+		var flapTime = (time-lastFlapTime).clamp(0.2, 0.8);
+		var downTime = 0.6 * flapTime;
+		var upTime = flapTime-downTime;
 		
 		SoundManager.playSound("assets/sounds/wing.wav");
 		
 		for (arm in arms) {
 			var mirror = (arm == arms[0]) ? 1 : -1;
+			arm.rotation = Random.float(90, 110) * mirror;
 			Actuate.stop(arm);
-			Actuate.tween(arm, downTime, { rotation: Random.float(-20,-40) * mirror }).ease(Quart.easeOut).onComplete(function(){
+			Actuate.tween(arm, downTime, { rotation: Random.float(-20,-40) * mirror }).ease(Expo.easeOut).onComplete(function(){
 				Actuate.tween(arm, upTime, { rotation: Random.float(90,110) * mirror }).ease(Quad.easeInOut).onComplete(function(){
 				});
 			});
 		}
+		
 		lastFlapTime = time;
 	}
 	

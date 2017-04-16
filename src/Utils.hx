@@ -86,3 +86,22 @@ class MatrixUtils {
 	}
 	
 }
+	
+class MathUtils {
+	
+	//t is percent between 0 and 1
+	static public function evaluatePercent(a:Float, b:Float, t:Float):Float {
+		return a + (b - a) * t;
+	}
+	
+	//t is between a and b
+	static public function evaluate(a:Float, b:Float, t:Float):Float {
+		return evaluatePercent(a, b, (t - a) / (b - a));
+	}
+	
+	//t is between a and b
+	static public function calculatePercent(a:Float, b:Float, t:Float):Float {
+		return (evaluate(a, b, t) - a) / (b - a);
+	}
+	
+}
