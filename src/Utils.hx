@@ -1,93 +1,34 @@
 package;
-import openfl.display.DisplayObject;
-import openfl.display.DisplayObjectContainer;
-import openfl.geom.Matrix;
-import openfl.geom.Point;
-import openfl.geom.Transform;
 
 /**
  * ...
  * @author Tom Wilson
  */
 
-class Utils { }
-	
-class DisplayObjectContainerUtils {
-	
-	static public function getChildren(displayObjectContainer:DisplayObjectContainer):Array<DisplayObject> {
-		var arr:Array<DisplayObject> = [];
-		for (i in 0...displayObjectContainer.numChildren) {
-			arr.push(displayObjectContainer.getChildAt(i));
+enum RecurseResult {
+	Recurse; // normal
+	SkipChildren; // skip children
+	SkipSiblings; // skip siblings
+	Exit; // exit completely
+}
+
+class Utils 
+{
+	static public function recurse(root:Dynamic, getChildren:Dynamic, check:Dynamic):Void {
+		function _recurse(o) {
+			var result = Reflect.callMethod(check, check, [o]);
+			if (result == RecurseResult.Recurse) {
+				var children:Iterable<Dynamic> = cast Reflect.callMethod(getChildren, getChildren, [o]);
+				for (c in children) {
+					var result2 = _recurse(c);
+					if (result2 == RecurseResult.SkipSiblings) break;
+					if (result2 == RecurseResult.Exit) return result2;
+				}
+			}
+			return result;
 		}
-		return arr;
+		_recurse(root);
 	}
-	
-}
-	
-class DisplayObjectUtils {
-	
-	static public function removeFromParent(displayObject:DisplayObject):Void {
-		if (displayObject.parent != null) {
-			displayObject.parent.removeChild(displayObject);
-		}
-	}
-	
-	static public function localToLocal(from:DisplayObject, to:DisplayObject):Point
-	{
-		var point:Point = new Point();
-		point = from.localToGlobal(point);
-		point = to.globalToLocal(point);
-		return point;
-	}
-	
-}
-	
-class ArrayUtils {
-	
-	static public function contains<T>(array:Array<T>, element:T):Bool {
-		return array.indexOf(element) > -1;
-	}
-	
-}
-	
-class TransformUtils {
-	
-	static public function getGlobalMatrix(t:Transform):Matrix {
-		return t.concatenatedMatrix;
-	}
-	
-	static public function setGlobalMatrix(t:Transform, gm1:Matrix):Void {
-		t.matrix = new Matrix();
-		var gm2 = getGlobalMatrix(t);
-		var dif = MatrixUtils.difference(gm2, gm1);
-		t.matrix = dif;
-	}
-	
-	static public function differenceMatrix(t1:Transform, t2:Transform):Matrix {
-		return MatrixUtils.difference(getGlobalMatrix(t1), getGlobalMatrix(t2));
-	}
-	
-}
-	
-class MatrixUtils {
-	
-	static public function difference(m2:Matrix, m1:Matrix):Matrix {
-		m1 = m1.clone();
-		m2 = m2.clone();
-		m2.invert();
-		m1.concat(m2);
-		return m1;
-	}
-	
-	static public function applyMatrix(t:Transform, m:Matrix):Void {
-		m = m.clone();
-		m.concat(t.matrix);
-		t.matrix = m;
-	}
-	
-}
-	
-class MathUtils {
 	
 	//t is percent between 0 and 1
 	static public function evaluatePercent(a:Float, b:Float, t:Float):Float {
@@ -104,4 +45,11 @@ class MathUtils {
 		return (evaluate(a, b, t) - a) / (b - a);
 	}
 	
+	static public function deg2rad(v:Float) {
+		return v * Math.PI / 180;
+	}
+	
+	static public function rad2deg(v:Float) {
+		return v * 180 / Math.PI;
+	}
 }

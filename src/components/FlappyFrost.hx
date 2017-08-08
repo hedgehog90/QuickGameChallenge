@@ -2,6 +2,8 @@ package components;
 
 using components.Component;
 using Thx.Floats;
+using Lambda;
+using Extensions;
 
 import haxe.Timer;
 import motion.Actuate;
@@ -12,6 +14,7 @@ import nape.callbacks.InteractionType;
 import nape.geom.Vec2;
 import nape.phys.Body;
 import nape.phys.BodyType;
+import nape.phys.MassMode;
 import nape.shape.Circle;
 import nape.shape.Polygon;
 import openfl.Assets;
@@ -19,8 +22,10 @@ import openfl.Lib;
 import openfl.display.DisplayObject;
 import openfl.display.MovieClip;
 import openfl.display.Sprite;
+import openfl.geom.Matrix;
 import openfl.text.TextField;
 import components.World;
+import components.Component;
 import openfl.ui.Keyboard;
 
 /**
@@ -29,12 +34,10 @@ import openfl.ui.Keyboard;
  */
 class FlappyFrost extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
 	public var autoFly:Bool = false;
 	public var autoFlyHeight:Float = App.SCREEN_HEIGHT/2;
-	public var body:Body;
+	public var rigidBody:RigidBody;
+	public var colliders:Array<Collider>;
 	
 	var frost:MovieClip;
 	var head:Sprite;
@@ -42,22 +45,13 @@ class FlappyFrost extends Component
 	var arm2:Sprite;
 	var leg1:Sprite;
 	var leg2:Sprite;
-	var bottom:Sprite;
 	var torso:Sprite;
-	var top:Sprite;
 	var abdomen:Sprite;
 	var mouth:Sprite;
 	var hair:Sprite;
 	var eye1:Sprite;
 	var eye2:Sprite;
-	var headInner:Sprite;
-	var leg1Inner:Sprite;
-	var leg2Inner:Sprite;
-	var arm1Inner:Sprite;
-	var arm2Inner:Sprite;
 	
-	var legsInner:Array<Sprite> = [];
-	var armsInner:Array<Sprite> = [];
 	var legs:Array<Sprite> = [];
 	var arms:Array<Sprite> = [];
 	var eyes:Array<Sprite> = [];
@@ -80,67 +74,59 @@ class FlappyFrost extends Component
 		
 		world = gameObject.getParentComponent(World);
 		
-		frost = Assets.getMovieClip("assets:frost");
-		gameObject.addChild(frost);
+		frost = Main.self.getMovieClip("frost_1");
+		colliders = gameObject.getComponentsInChildren(Collider);
+		gameObjectSprite.addChild(frost);
 		
-		bottom = cast(frost.getChildByName("bottom"), Sprite);
-		top = cast(frost.getChildByName("top"), Sprite);
-		head = cast(top.getChildByName("head"), Sprite);
-		arm1 = cast(top.getChildByName("arm1"), Sprite);
-		arm2 = cast(top.getChildByName("arm2"), Sprite);
-		torso = cast(top.getChildByName("torso"), Sprite);
-		abdomen = cast(bottom.getChildByName("abdomen"), Sprite);
-		leg1 = cast(bottom.getChildByName("leg1"), Sprite);
-		leg2 = cast(bottom.getChildByName("leg2"), Sprite);
+		head = cast(frost.getChildByName("head"), Sprite);
+		arm1 = cast(frost.getChildByName("arm1"), Sprite);
+		arm2 = cast(frost.getChildByName("arm2"), Sprite);
+		torso = cast(frost.getChildByName("torso"), Sprite);
+		abdomen = cast(frost.getChildByName("abdomen"), Sprite);
+		leg1 = cast(frost.getChildByName("leg1"), Sprite);
+		leg2 = cast(frost.getChildByName("leg2"), Sprite);
 		
-		headInner = cast(head.getChildByName("head"), Sprite);
-		leg1Inner = cast(leg1.getChildByName("leg"), Sprite);
-		leg2Inner = cast(leg2.getChildByName("leg"), Sprite);
-		arm1Inner = cast(arm1.getChildByName("arm"), Sprite);
-		arm2Inner = cast(arm2.getChildByName("arm"), Sprite);
-		
-		mouth = cast(headInner.getChildByName("mouth"), Sprite);
-		hair = cast(headInner.getChildByName("hair"), Sprite);
-		eye1 = cast(headInner.getChildByName("eye1"), Sprite);
-		eye2 = cast(headInner.getChildByName("eye2"), Sprite);
+		mouth = cast(head.getChildByName("mouth"), Sprite);
+		hair = cast(head.getChildByName("hair"), Sprite);
+		eye1 = cast(head.getChildByName("eye1"), Sprite);
+		eye2 = cast(head.getChildByName("eye2"), Sprite);
 		
 		legs = [leg1, leg2];
 		arms = [arm1, arm2];
-		legsInner = [leg1Inner, leg2Inner];
-		armsInner = [arm1Inner, arm2Inner];
 		eyes = [eye1, eye2];
 		
-		for (leg in legsInner) {
-			var jitter = new JitterMotion();
-			leg.addComponent(jitter);
+		for (leg in legs) {
+			var legInner = leg.getChildAt(0);
+			var jitter:JitterMotion = legInner.addComponent(JitterMotion);
+			jitter.restrained = false;
 			legJitters.push(jitter);
 		}
 		
-		for (arm in armsInner) {
-			var jitter = new JitterMotion();
-			arm.addComponent(jitter);
+		for (arm in arms) {
+			var armInner = arm.getChildAt(0);
+			var jitter:JitterMotion = armInner.addComponent(JitterMotion);
+			jitter.restrained = false;
 			armJitters.push(jitter);
 		}
 		
-		headJitter = new JitterMotion();
-		headInner.addComponent(headJitter);
+		headJitter = head.addComponent(JitterMotion);
 		
-		hairJitter = new JitterMotion();
-		hair.addComponent(hairJitter);
+		hairJitter = hair.addComponent(JitterMotion);
 		
-		bodyJitter = new JitterMotion();
-		frost.addComponent(bodyJitter);
+		bodyJitter = frost.addComponent(JitterMotion);
+		bodyJitter.properties.rotationAmount = 10;
 		
-		body = new Body(BodyType.DYNAMIC);
-		body.shapes.add(new Circle(40));
-		body.space = Main.self.world.space;
+		rigidBody = gameObject.addComponent(RigidBody);
+		//rigidBody.offset.x = 10;
+		rigidBody.body.allowRotation = false;
+		rigidBody.body.massMode = MassMode.FIXED;
+		rigidBody.body.mass = 5;
 	}
 	
 	override function onDisable() 
 	{
 		super.onDisable();
 		world = null;
-		body.space = null;
 	}
 	
 	/*function animate(part:DisplayObject, property:String, timeMin:Float, timeMax:Float, valueMin:Float, valueMax:Float, ease = null){
@@ -154,13 +140,12 @@ class FlappyFrost extends Component
 		repeat();
 	}*/
 	
-	override public function onUpdate() 
+	override function onPreUpdate() 
 	{
-		super.onUpdate();
+		super.onPreUpdate();
 		
-		//trace(body.position, autoFlyHeight);
 		if (autoFly) {
-			if (body.position.y > autoFlyHeight && flapTimer > 0.2) {
+			if (rigidBody.body.position.y > autoFlyHeight && flapTimer > 0.2) {
 				flap();
 			}
 		} else {
@@ -169,63 +154,52 @@ class FlappyFrost extends Component
 			}
 			if (Input.isKeyDown(Keyboard.LEFT)){
 				//speedX = 2
-				body.applyImpulse(new Vec2(-200,0));
+				rigidBody.body.applyImpulse(Vec2.weak(-200,0));
 			}
 			if (Input.isKeyDown(Keyboard.RIGHT)){
 				//speedX = 2;
-				body.applyImpulse(new Vec2(200,0));
+				rigidBody.body.applyImpulse(Vec2.weak(200,0));
 			}
 		}
 		
-		body.velocity = new Vec2(body.velocity.x.clampSym(200), body.velocity.y);
-		var scaredness = Utils.MathUtils.calculatePercent(0.2, 2, flapTimer).clamp(0, 1);
-		for (jitter in legJitters) jitter.properties.set(5, 0.5, 1, 1, scaredness.interpolate(15,50), scaredness.interpolate(0.8,2.5), 1);
-		for (jitter in armJitters) jitter.properties.set(5, 0.5, 1, 1, scaredness.interpolate(5,50), scaredness.interpolate(0.5,2), 1);
+		rigidBody.body.velocity.setxy(rigidBody.body.velocity.x.clampSym(200), rigidBody.body.velocity.y);
+		var scaredness = Utils.calculatePercent(0.2, 2, flapTimer).clamp(0, 1);
+		for (jitter in legJitters) jitter.properties.set(0, 0.5, 1, 1, scaredness.interpolate(15, 50), scaredness.interpolate(0.8, 2.5), 1);
+		for (jitter in armJitters) jitter.properties.set(5, 0.5, 1, 1, scaredness.interpolate(5, 50), scaredness.interpolate(0.5, 2), 1);
 		headJitter.properties.set(2, 0.5, 1, 1, 5, 1, 1);
-		hairJitter.properties.set(0,0,0,0,0,0,0,0.1,0.1);
-		//bodyJitter.restrained = false;
+		hairJitter.properties.set(0, 0, 0, 0, 0, 0, 0, 0.1, 0.1);
 		
-		//body.velocity = new Vec2(body.velocity.x.clamp(0,50), body.velocity.y.clamp(0,));
-		//if (body.velocity.x > 50)
-		
-		//speedY = (speedY - gravity).clamp(-16, 30);
-		//speedX = (speedX * 0.95).clamp(3, 50);
-		
-		rotationTarget = body.velocity.y * 0.05;
+		var rotationTarget = Utils.deg2rad(rigidBody.body.velocity.y * 0.05);
+		//rigidBody.body.rotation += (rotationTarget - rigidBody.body.rotation) * 0.5;
+		rigidBody.updateColliders();
+	}
+	
+	override public function onUpdate() 
+	{
+		super.onUpdate();
 		flapTimer += App.frameDeltaTime;
-		
-		
 	}
 	
 	override function onPostUpdate() 
 	{
 		super.onPostUpdate();
-		gameObject.x = body.position.x;
-		gameObject.y = body.position.y;
-		//gameObject.x += speedX;
-		//gameObject.y -= speedY;
-		gameObject.rotation += (rotationTarget - gameObject.rotation) * 0.5;
 		
-		var bodies = body.interactingBodies(InteractionType.ANY);
-		bodies.foreach(function(b:Body){
-			var go:DisplayObject = cast(b.userData, DisplayObject);
-			var components = go.getComponents();
-			for (c in components) {
-				if (Std.is(c, Coin)) {
-					cast(c, Coin).hit();
-				}
-			}
-		});
+		var touchingGameObjects = world.getTouchingGameObjects(gameObject);
+		var touchingCoins = Component.getComponentsFromMultiple(touchingGameObjects, Coin);
+		for (c in touchingCoins) {
+			c.hit();
+		}
 	}
 	
 	public function flap() 
 	{
-		body.applyImpulse(new Vec2(200, 0));
-		//body.velocity = new Vec2(body.velocity.x, -400);
+		rigidBody.body.applyImpulse(Vec2.weak(200, 0));
+		//body.applyImpulse(Vec2.weak(800, 0));
+		//body.velocity.y = -400;
 		if (autoFly) {
-			body.velocity.y = -250;
+			rigidBody.body.velocity.y = -250;
 		} else {
-			body.velocity.y = -400;
+			rigidBody.body.velocity.y = -400;
 		}
 		//speedX += 5;
 		//speedY = 8;
@@ -237,14 +211,18 @@ class FlappyFrost extends Component
 		var downTime = 0.6 * flapTime;
 		var upTime = flapTime-downTime;
 		
-		SoundManager.playSound("assets/sounds/wing.wav");
+		SoundManager.playSound("assets/sounds/wing.wav", 1, 0);
+		
+		var rotation1 = 120 + Random.float( -10, 10);
+		var rotation2 = 10 + Random.float( -10, 10);
+		var rotation3 = 130 + Random.float( -10, 10);
 		
 		for (arm in arms) {
 			var mirror = (arm == arms[0]) ? 1 : -1;
-			arm.rotation = Random.float(90, 110) * mirror;
+			arm.rotation = rotation1 * mirror;
 			Actuate.stop(arm);
-			Actuate.tween(arm, downTime, { rotation: Random.float(-20,-40) * mirror }).ease(Expo.easeOut).onComplete(function(){
-				Actuate.tween(arm, upTime, { rotation: Random.float(90,110) * mirror }).ease(Quad.easeInOut).onComplete(function(){
+			Actuate.tween(arm, downTime, { rotation: rotation2 * mirror }).ease(Expo.easeOut).onComplete(function(){
+				Actuate.tween(arm, upTime, { rotation: rotation3 * mirror }).ease(Quad.easeInOut).onComplete(function(){
 				});
 			});
 		}
@@ -255,6 +233,6 @@ class FlappyFrost extends Component
 }
 
 enum FlapState {
-  DOWN;
-  NEUTRAL;
+	DOWN;
+	NEUTRAL;
 }

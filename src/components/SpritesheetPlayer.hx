@@ -1,6 +1,6 @@
 package components;
 
-using Utils;
+using Extensions;
 
 import openfl.Lib;
 import openfl.display.Sprite;
@@ -15,40 +15,36 @@ import spritesheet.data.SpritesheetFrame;
  */
 class SpritesheetPlayer extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
-	var animatedSprite:AnimatedSprite;
+	public var display(default,null):AnimatedSprite;
 
-	public function new(spritesheet:Spritesheet) 
+	public function new() 
 	{
 		super();
-		
-		animatedSprite = new AnimatedSprite(spritesheet, true);
+		display = new AnimatedSprite(Main.self.assetsSpritesheet, true);
 	}
 	
 	override function onEnable() 
 	{
 		super.onEnable();
-		gameObject.addChild(animatedSprite);
+		gameObjectSprite.addChild(display);
 	}
 	
 	override function onDisable() 
 	{
 		super.onDisable();
-		animatedSprite.removeFromParent();
+		display.removeFromParent();
 	}
 	
 	public function play(behaviour:String) 
 	{
-		animatedSprite.showBehavior(behaviour);
+		display.showBehavior(behaviour);
 	}
 	
 	override function onUpdate() 
 	{
 		super.onUpdate();
 		
-		animatedSprite.update(App.deltaTime);
+		display.update(App.deltaTime);
 	}
 	
 }

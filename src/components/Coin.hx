@@ -3,10 +3,13 @@ package components;
 using components.Component;
 
 import components.Component;
+import nape.geom.Mat23;
+import nape.geom.Vec2;
 import nape.phys.Body;
 import nape.phys.BodyType;
 import nape.shape.Circle;
 import openfl.display.Sprite;
+import openfl.geom.Point;
 import spritesheet.AnimatedSprite;
 import spritesheet.data.SpritesheetFrame;
 
@@ -16,43 +19,55 @@ import spritesheet.data.SpritesheetFrame;
  */
 class Coin extends Component
 {
-	var body:Body;
+	var rigidBody:RigidBody;
 	var world:World;
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-
+	
 	public function new() 
 	{
 		super();
-		world = gameObject.getParentComponent(World);
-	}
-	
-	public function hit() 
-	{
-		world.score += 100;
-		destroyWithGameObject();
 	}
 	
 	override function onEnable() 
 	{
 		super.onEnable();
 		
-		var spritesheetPlayer = new SpritesheetPlayer(Main.self.assetsSpritesheet);
-		gameObject.addComponent(spritesheetPlayer);
+		world = gameObjectSprite.getParentComponent(World);
+		
+		var spritesheetPlayer = gameObject.addComponent(SpritesheetPlayer);
 		spritesheetPlayer.play("coin");
 		
-		body = new Body(BodyType.STATIC);
-		var shape = new Circle(10);
-		shape.sensorEnabled = true;
-		body.shapes.add(shape);
-		body.space = Main.self.world.space;
-		body.userData = gameObject;
+		var collider:Collider = gameObject.addComponent(Collider);
+		collider.addCircle(Vec2.weak(), 12);
+		collider.setAllSensors(true);
+		rigidBody = gameObject.addComponent(RigidBody);
+		rigidBody.body.type = BodyType.KINEMATIC;
+		updatePosition();
 	}
 	
 	override function onDisable() 
 	{
 		super.onDisable();
-		body.space = null;
+		world = null;
+		rigidBody = null;
+	}
+	
+	override function onPreUpdate() 
+	{
+		super.onPreUpdate();
+		
+		//updatePosition();
+	}
+	
+	public function updatePosition() 
+	{
+		rigidBody.body.position = Vec2.fromPoint(world.getPosition(gameObject), true);
+	}
+	
+	public function hit() 
+	{
+		world.score += 10;
+		SoundManager.playSound("assets/sounds/ding.wav", 1, 0, true);
+		destroyWithGameObject();
 	}
 	
 }

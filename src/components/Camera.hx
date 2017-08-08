@@ -1,6 +1,6 @@
 package components;
 
-using Utils;
+using Extensions;
 
 import components.Component;
 import haxe.Timer;
@@ -17,19 +17,10 @@ import openfl.geom.Rectangle;
  */
 class Camera extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
-	public var context:DisplayObject;
+	public var context(default,set):DisplayObject;
+	public var contextMatrix(default,null):Matrix = new Matrix();
 	public var zoom:Float = 1.0;
 	public var rect:Rectangle = new Rectangle();
-
-	public function new(context:DisplayObject) 
-	{
-		this.context = context;
-		
-		super();
-	}
 	
 	override function onEnable() 
 	{
@@ -63,6 +54,7 @@ class Camera extends Component
 	
 	function updateMatrix() 
 	{
+		if (context == null) return;
 		var matrix = context.transform.differenceMatrix(gameObject.transform);
 		
 		var rectMatrix = matrix.clone();
@@ -77,7 +69,17 @@ class Camera extends Component
 		matrix.invert();
 		matrix.scale(zoom,zoom);
 		matrix.translate(App.SCREEN_WIDTH / 2, App.SCREEN_HEIGHT / 2);
+		
+		contextMatrix.copyFrom(matrix);
+		
 		context.transform.matrix = matrix;
+	}
+	
+	function set_context(value:DisplayObject):DisplayObject 
+	{
+		context = value;
+		updateMatrix();
+		return context;
 	}
 	
 }

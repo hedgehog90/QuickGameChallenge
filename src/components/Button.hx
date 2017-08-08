@@ -15,9 +15,6 @@ import openfl.events.MouseEvent;
  */
 class Button extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
 	public var onClick : Void->Void;
 	public var onRollOver : Void->Void;
 	public var onRollOut : Void->Void;
@@ -115,9 +112,9 @@ class Button extends Component
 	
 	function set_enabled(value:Bool):Bool 
 	{
-		gameObject.mouseEnabled = value;
-		gameObject.mouseChildren = !value;
-		gameObject.buttonMode = value;
+		gameObjectSprite.mouseEnabled = value;
+		gameObjectSprite.mouseChildren = !value;
+		gameObjectSprite.buttonMode = value;
 		return enabled = value;
 	}
 	

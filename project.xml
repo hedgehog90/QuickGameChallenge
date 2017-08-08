@@ -8,34 +8,42 @@
 	<!-- output -->
 	<app main="Main" file="QuickGameChallenge" path="bin" />
 	<app preloader="Preloader" />
+	<app swf-version="15" />
 	
 	<window background="#ffffff" fps="60" />
 	<window width="1024" height="633" unless="mobile" />
+	<window width="0" height="0" if="html5" />
 	<window orientation="landscape" vsync="false" antialiasing="0" if="cpp" />
 	
 	<!-- classpath, haxe libs -->
 	<source path="src" />
 	<haxelib name="openfl" />
 	<haxelib name="actuate" />
-	<haxedef name="PromhxExposeErrors" />
 	<haxelib name="promhx" />
 	<haxelib name="thx.core" />
 	<haxelib name="haxe-strings" />
 	<haxelib name="random" />
 	<haxelib name="noisehx" />
+	<haxelib name="spritesheet" />
+	<haxelib name="nape" />
 	
 	<!--<haxelib name="thx.promise" />-->
 	
 	<!-- assets -->
 	<icon path="assets/openfl.svg" />
 	
+	<haxedef name="advanced-telemetry" if="debug" />
+	<haxedef name="PromhxExposeErrors" />
+	
 	<assets path="assets"/>
 	
 	<library path="swf/assets.swf" id="assets" />
 	<library path="swf/loader.swf" id="loader" preload="true" />
 	
-	<!-- optimize output
-	<haxeflag name="-dce full" /> -->
+	<!-- optimize output -->
+	<!--<haxeflag name="-dce full" unless="windows||debug" />-->
+	<!--<haxeflag name="-D dom" if="html5" />-->
+	<haxeflag name="-D webgl" if="html5" />
 
 	
 </project>

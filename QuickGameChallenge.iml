@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="HAXE_MODULE" version="4">
+  <component name="HaxeModuleSettingsStorage">
+    <option name="buildConfig" value="3" />
+    <option name="flexSdkName" value="flex_sdk_4.6" />
+    <option name="openFLPath" value="$MODULE_DIR$/project.xml" />
+    <option name="openFLTarget" value="HTML5" />
+    <option name="outputFolder" value="$MODULE_DIR$/out/production/QuickGameChallenge" />
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/out/production/QuickGameChallenge" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="Haxe 3.2.1" jdkType="Haxe toolkit" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/actuate/1,8,7">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/actuate/1,8,7" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/actuate/1,8,7" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/promhx/1,1,0/src/main">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/promhx/1,1,0/src/main" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/promhx/1,1,0/src/main" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/thx,core/0,42,1/src">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/thx,core/0,42,1/src" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/thx,core/0,42,1/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/haxe-strings/3,0,0/src">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/haxe-strings/3,0,0/src" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/haxe-strings/3,0,0/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/random/1,4,1/src">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/random/1,4,1/src" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/random/1,4,1/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/noisehx/0,0,1">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/noisehx/0,0,1" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/noisehx/0,0,1" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/spritesheet">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/spritesheet" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/spritesheet" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/nape/2,0,20">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/nape/2,0,20" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/nape/2,0,20" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="haxelib|C:/Dev/Haxe/haxe-3.2.1/lib/openfl-dev">
+        <CLASSES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/openfl-dev" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://C:/Dev/Haxe/haxe-3.2.1/lib/openfl-dev" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

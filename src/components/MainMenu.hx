@@ -23,9 +23,6 @@ import components.World;
  */
 class MainMenu extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
 	var menu:Sprite;
 	var button:Sprite;
 	var copyright:Sprite;
@@ -41,13 +38,13 @@ class MainMenu extends Component
 		super.onEnable();
 		
 		var menu = Assets.getMovieClip("assets:main_menu");
-		gameObject.addChild(menu);
+		gameObjectSprite.addChild(menu);
 		
 		button = cast(menu.getChildByName("startButton"), Sprite);
 		copyright = cast(menu.getChildByName("copyright"), Sprite);
 		title = cast(menu.getChildByName("title"), Sprite);
 		
-		var buttonComponent = new Button();
+		var buttonComponent = button.addComponent(Button);
 		buttonComponent.onClick = function(){
 			buttonComponent.enabled = false;
 			//gameObject.mouseEnabled = false;
@@ -56,7 +53,6 @@ class MainMenu extends Component
 			});
 			Main.self.world.start();
 		};
-		button.addComponent(buttonComponent);
 		
 		Actuate.tween(title, 1, { scaleX: 1.1, scaleY: 1.1 }).ease(Quad.easeInOut).repeat().reflect();
 		title.rotation = -5;

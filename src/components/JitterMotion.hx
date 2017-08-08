@@ -11,9 +11,6 @@ import openfl.display.Sprite;
  */
 class JitterMotion extends Component
 {
-	public var gameObject(get, null):Sprite;
-	function get_gameObject():Sprite { return cast(_gameObject, Sprite); }
-	
 	static var perlin = new Perlin();
 	
 	var timePosition:Float;
@@ -94,16 +91,16 @@ class JitterMotion extends Component
         {
 			var positionFbm1 = Fbm(noiseVectors[0][0] * timeScale, noiseVectors[0][1] * timeScale, properties.positionOctave);
 			var positionFbm2 = properties.positionLock ? positionFbm1 : Fbm(noiseVectors[1][0] * timeScale, noiseVectors[1][1] * timeScale, properties.positionOctave);
-           x = positionFbm1 * properties.positionXComponent * properties.positionAmount * 2;
-           y = positionFbm2 * properties.positionYComponent * properties.positionAmount * 2;
+			x = positionFbm1 * properties.positionXComponent * properties.positionAmount * 2;
+			y = positionFbm2 * properties.positionYComponent * properties.positionAmount * 2;
         }
 
         if (properties.scaleAmount != 0.0)
         {
 			var scaleFbm1 = Fbm(noiseVectors[2][0] * timeScale, noiseVectors[2][1] * timeScale, properties.scaleOctave);
 			var scaleFbm2 = properties.scaleLock ? scaleFbm1 : Fbm(noiseVectors[3][0] * timeScale, noiseVectors[3][1] * timeScale, properties.scaleOctave);
-           scaleX = 1+scaleFbm1 * properties.scaleXComponent * properties.scaleAmount * 2;
-           scaleY = 1+scaleFbm2 * properties.scaleYComponent * properties.scaleAmount * 2;
+			scaleX = 1+scaleFbm1 * properties.scaleXComponent * properties.scaleAmount * 2;
+			scaleY = 1+scaleFbm2 * properties.scaleYComponent * properties.scaleAmount * 2;
         }
 
         if (properties.rotationAmount != 0.0)
